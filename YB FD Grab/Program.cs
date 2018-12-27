@@ -16,7 +16,7 @@ namespace YB_FD_Grab
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new Main_Form());
         }
     }
 }
