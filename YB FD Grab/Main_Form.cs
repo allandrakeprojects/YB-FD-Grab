@@ -166,8 +166,8 @@ namespace YB_FD_Grab
                 SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
             }
 
-            Properties.Settings.Default.______last_bill_no = "";
-            Properties.Settings.Default.Save();
+            //Properties.Settings.Default.______last_bill_no = "";
+            //Properties.Settings.Default.Save();
         }
         private void panel2_MouseDown(object sender, MouseEventArgs e)
         {
@@ -259,7 +259,31 @@ namespace YB_FD_Grab
         private void Main_Form_Load(object sender, EventArgs e)
         {
             InitializeChromium();
+            
             label1.Text = Properties.Settings.Default.______pending_bill_no;
+            if (Properties.Settings.Default.______last_bill_no == "")
+            {
+                textBox_bill_no.Visible = true;
+                panel_cefsharp.Enabled = false;
+            }
+        }
+
+        private void textBox_bill_no_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (!String.IsNullOrEmpty(textBox_bill_no.Text.Trim()))
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    DialogResult dr = MessageBox.Show("Proceed?", "YB FD Grab", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (dr == DialogResult.Yes)
+                    {
+                        Properties.Settings.Default.______last_bill_no = textBox_bill_no.Text.Trim();
+                        Properties.Settings.Default.Save();
+                        textBox_bill_no.Visible = false;
+                        panel_cefsharp.Enabled = true;
+                    }
+                }
+            }
         }
 
         // CefSharp Initialize
@@ -344,10 +368,10 @@ namespace YB_FD_Grab
                     label_currentrecord.Visible = true;
                     __mainFormHandler = Application.OpenForms[0];
                     __mainFormHandler.Size = new Size(466, 168);
-                    timer_pending.Start();
 
                     if (!__isLogin)
                     {
+                        timer_pending.Start();
                         __isLogin = true;
                         panel_cefsharp.Visible = false;
                         label_brand.Visible = true;
@@ -393,12 +417,6 @@ namespace YB_FD_Grab
         
         private void ___PlayerLastBillNo()
         {
-            if (Properties.Settings.Default.______last_bill_no == "")
-            {
-                Properties.Settings.Default.______last_bill_no = "D00237327";
-                Properties.Settings.Default.Save();
-            }
-
             label_player_last_bill_no.Text = "Last Bill No.: " + Properties.Settings.Default.______last_bill_no;
         }
         
@@ -492,7 +510,7 @@ namespace YB_FD_Grab
                         DateTime process_datetime_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(process_datetime.ToString()) / 1000d)).ToLocalTime();
                         JToken vip = __jo.SelectToken("$.aaData[" + i + "].vipLevel").ToString();
                         JToken gateway = __jo.SelectToken("$.aaData[" + i + "].toBankName").ToString();
-                        JToken method = __jo.SelectToken("$.aaData[0].toPaymentType").ToString();
+                        JToken method = __jo.SelectToken("$.aaData[" + i + "].toPaymentType").ToString();
                         JToken amount = __jo.SelectToken("$.aaData[" + i + "].amount").ToString().Replace(",", "");
                         if (status.ToString() == "2")
                         {
@@ -503,7 +521,7 @@ namespace YB_FD_Grab
                             status = "0";
                         }
 
-                        player_info.Add(username + "*|*" + name + "*|*" + date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + vip + "*|*" + amount + "*|*" + gateway + "*|*" + status + "*|*" + bill_no + "*|*" + __playerlist_cn + "*|*" + process_datetime + "*|*" + method);
+                        player_info.Add(username + "*|*" + name + "*|*" + date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + vip + "*|*" + amount + "*|*" + gateway + "*|*" + status + "*|*" + bill_no + "*|*" + __playerlist_cn + "*|*" + process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + method);
                     }
                     else
                     {
@@ -633,7 +651,7 @@ namespace YB_FD_Grab
                             }
 
                             // ----- Insert Data
-                            using (StreamWriter file = new StreamWriter(Path.GetTempPath() + @"\fdgrab_fy.txt", true, Encoding.UTF8))
+                            using (StreamWriter file = new StreamWriter(Path.GetTempPath() + @"\fdgrab_yb.txt", true, Encoding.UTF8))
                             {
                                 file.WriteLine(_username + "*|*" + _name + "*|*" + _contact_no + "*|*" + _date_deposit + "*|*" + _vip + "*|*" + _amount + "*|*" + _gateway + "*|*" + _status + "*|*" + _bill_no + "*|*" + _process_datetime + "*|*" + _method);
                                 file.Close();
@@ -789,11 +807,6 @@ namespace YB_FD_Grab
 
                 __send = 0;
             }
-
-            // save to temp file
-            // loop search
-            // if not equal to pending get new status
-            // if equal remain
         }
 
         private void ___InsertData(string username, string name, string date_deposit, string vip, string amount, string gateway, string status, string bill_no, string contact_no, string process_datetime, string method)
@@ -801,7 +814,7 @@ namespace YB_FD_Grab
             try
             {
                 double amount_replace = Convert.ToDouble(amount);
-                string password = __brand_code + username + date_deposit + "youdieidie";
+                string password = __brand_code + username.ToLower() + date_deposit + "youdieidie";
                 byte[] encodedPassword = new UTF8Encoding().GetBytes(password);
                 byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedPassword);
                 string token = BitConverter.ToString(hash)
@@ -858,7 +871,7 @@ namespace YB_FD_Grab
             try
             {
                 double amount_replace = Convert.ToDouble(amount);
-                string password = __brand_code + username + date_deposit + "youdieidie";
+                string password = __brand_code + username.ToLower() + date_deposit + "youdieidie";
                 byte[] encodedPassword = new UTF8Encoding().GetBytes(password);
                 byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedPassword);
                 string token = BitConverter.ToString(hash)
@@ -1069,6 +1082,16 @@ namespace YB_FD_Grab
         private void label_player_last_bill_no_MouseClick(object sender, MouseEventArgs e)
         {
             Clipboard.SetText(label_player_last_bill_no.Text.Replace("Last Bill No.: ", "").Trim());
+        }
+
+        private void panel1_MouseClick(object sender, MouseEventArgs e)
+        {
+            label1.Visible = true;
+        }
+
+        private void panel2_MouseClick(object sender, MouseEventArgs e)
+        {
+            label1.Visible = false;
         }
     }
 }
