@@ -9,7 +9,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Mail;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -30,6 +29,7 @@ namespace YB_FD_Grab
         private int __total_player = 0;
         private string __brand_code = "YB";
         private string __brand_color = "#EC6506";
+        private string __app = "FD Grab";
         private string __player_last_bill_no = "";
         private string __playerlist_cn = "";
         private string __playerlist_cn_pending = "";
@@ -261,29 +261,6 @@ namespace YB_FD_Grab
             InitializeChromium();
             
             label1.Text = Properties.Settings.Default.______pending_bill_no;
-            if (Properties.Settings.Default.______last_bill_no == "")
-            {
-                textBox_bill_no.Visible = true;
-                panel_cefsharp.Enabled = false;
-            }
-        }
-
-        private void textBox_bill_no_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (!String.IsNullOrEmpty(textBox_bill_no.Text.Trim()))
-            {
-                if (e.KeyCode == Keys.Enter)
-                {
-                    DialogResult dr = MessageBox.Show("Proceed?", "YB FD Grab", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if (dr == DialogResult.Yes)
-                    {
-                        Properties.Settings.Default.______last_bill_no = textBox_bill_no.Text.Trim();
-                        Properties.Settings.Default.Save();
-                        textBox_bill_no.Visible = false;
-                        panel_cefsharp.Enabled = true;
-                    }
-                }
-            }
         }
 
         // CefSharp Initialize
@@ -323,7 +300,7 @@ namespace YB_FD_Grab
 
                         string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
                         SendITSupport("The application have been logout, please re-login again.");
-                        SendEmail("<html><body>Brand: <font color='" + __brand_color + "'>-----" + __brand_code + "-----</font><br/>IP: 192.168.10.252<br/>Location: Robinsons Summit Office<br/>Date and Time: [" + datetime + "]<br/>Line Number: " + LineNumber() + "<br/>Message: <b>The application have been logout, please re-login again.</b></body></html>");
+                        SendMyBot("The application have been logout, please re-login again.");
                         __send = 0;
                         timer_pending.Stop();
                     }));
@@ -417,9 +394,118 @@ namespace YB_FD_Grab
         
         private void ___PlayerLastBillNo()
         {
+            if (Properties.Settings.Default.______last_bill_no == "")
+            {
+                ___GetLastBillNo();
+            }
+
             label_player_last_bill_no.Text = "Last Bill No.: " + Properties.Settings.Default.______last_bill_no;
         }
-        
+
+        private void ___GetLastBillNo()
+        {
+            try
+            {
+                string password = __brand_code.ToString() + "youdieidie";
+                byte[] encodedPassword = new UTF8Encoding().GetBytes(password);
+                byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedPassword);
+                string token = BitConverter.ToString(hash)
+                   .Replace("-", string.Empty)
+                   .ToLower();
+
+                using (var wb = new WebClient())
+                {
+                    var data = new NameValueCollection
+                    {
+                        ["brand_code"] = __brand_code,
+                        ["token"] = token
+                    };
+
+                    var result = wb.UploadValues("http://zeus.ssimakati.com:8080/API/lastFDRecord", "POST", data);
+                    string responsebody = Encoding.UTF8.GetString(result);
+                    var deserializeObject = JsonConvert.DeserializeObject(responsebody);
+                    JObject jo = JObject.Parse(deserializeObject.ToString());
+                    JToken lbn = jo.SelectToken("$.msg");
+
+                    Properties.Settings.Default.______last_bill_no = lbn.ToString();
+                    Properties.Settings.Default.Save();
+                }
+            }
+            catch (Exception err)
+            {
+                if (__isLogin)
+                {
+                    __send++;
+                    if (__send == 5)
+                    {
+                        string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
+                        SendITSupport("There's a problem to the server, please re-open the application.");
+                        SendMyBot(err.ToString());
+                        __send = 0;
+
+                        __isClose = false;
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        ___GetLastBillNo2();
+                    }
+                }
+            }
+        }
+
+        private void ___GetLastBillNo2()
+        {
+            try
+            {
+                string password = __brand_code + "youdieidie";
+                byte[] encodedPassword = new UTF8Encoding().GetBytes(password);
+                byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedPassword);
+                string token = BitConverter.ToString(hash)
+                   .Replace("-", string.Empty)
+                   .ToLower();
+
+                using (var wb = new WebClient())
+                {
+                    var data = new NameValueCollection
+                    {
+                        ["brand_code"] = __brand_code,
+                        ["token"] = token
+                    };
+
+                    var result = wb.UploadValues("http://zeus2.ssitex.com:8080/API/lastFDRecord", "POST", data);
+                    string responsebody = Encoding.UTF8.GetString(result);
+                    var deserializeObject = JsonConvert.DeserializeObject(responsebody);
+                    JObject jo = JObject.Parse(deserializeObject.ToString());
+                    JToken lbn = jo.SelectToken("$.msg");
+
+                    Properties.Settings.Default.______last_bill_no = lbn.ToString();
+                    Properties.Settings.Default.Save();
+                }
+            }
+            catch (Exception err)
+            {
+                if (__isLogin)
+                {
+                    __send++;
+                    if (__send == 5)
+                    {
+                        string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
+                        SendITSupport("There's a problem to the server, please re-open the application.");
+                        SendMyBot(err.ToString());
+                        __send = 0;
+
+                        __isClose = false;
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        ___GetLastBillNo();
+                    }
+                }
+            }
+        }
+
         private void ___SavePlayerLastBillNo(string bill_no)
         {
             Properties.Settings.Default.______last_bill_no = bill_no.Trim();
@@ -470,7 +556,7 @@ namespace YB_FD_Grab
                     {
                         string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
                         SendITSupport("There's a problem to the server, please re-open the application.");
-                        SendEmail("<html><body>Brand: <font color='" + __brand_color + "'>-----" + __brand_code + "-----</font><br/>IP: 192.168.10.252<br/>Location: Robinsons Summit Office<br/>Date and Time: [" + datetime + "]<br/>Line Number: " + LineNumber() + "<br/>Message: <b>" + err.ToString() + "</b></body></html>");
+                        SendMyBot(err.ToString());
                         __send = 0;
 
                         __isClose = false;
@@ -512,6 +598,7 @@ namespace YB_FD_Grab
                         JToken gateway = __jo.SelectToken("$.aaData[" + i + "].toBankName").ToString();
                         JToken method = __jo.SelectToken("$.aaData[" + i + "].toPaymentType").ToString();
                         JToken amount = __jo.SelectToken("$.aaData[" + i + "].amount").ToString().Replace(",", "");
+                        JToken pg_bill_no = __jo.SelectToken("$.aaData[" + i + "].referenceNo").ToString();
                         if (status.ToString() == "2")
                         {
                             status = "1";
@@ -521,7 +608,7 @@ namespace YB_FD_Grab
                             status = "0";
                         }
 
-                        player_info.Add(username + "*|*" + name + "*|*" + date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + vip + "*|*" + amount + "*|*" + gateway + "*|*" + status + "*|*" + bill_no + "*|*" + __playerlist_cn + "*|*" + process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + method);
+                        player_info.Add(username + "*|*" + name + "*|*" + date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + vip + "*|*" + amount + "*|*" + gateway + "*|*" + status + "*|*" + bill_no + "*|*" + __playerlist_cn + "*|*" + process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + method + "*|*" + pg_bill_no);
                     }
                     else
                     {
@@ -529,7 +616,23 @@ namespace YB_FD_Grab
                         {
                             __player_last_bill_no = bill_no.ToString().Trim();
                         }
-                        
+
+                        JToken username = __jo.SelectToken("$.aaData[" + i + "].userId").ToString();
+                        await ___PlayerListContactNumberAsync(username.ToString(), "normal");
+                        JToken name = __jo.SelectToken("$.aaData[" + i + "].userName").ToString();
+                        JToken date_deposit = __jo.SelectToken("$.aaData[" + i + "].createTime").ToString();
+                        DateTime date_deposit_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(date_deposit.ToString()) / 1000d)).ToLocalTime();
+                        JToken process_datetime = __jo.SelectToken("$.aaData[" + i + "].approvedTime").ToString();
+                        //DateTime process_datetime_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(process_datetime.ToString()) / 1000d)).ToLocalTime();
+                        JToken vip = __jo.SelectToken("$.aaData[" + i + "].vipLevel").ToString();
+                        JToken gateway = __jo.SelectToken("$.aaData[" + i + "].toBankName").ToString();
+                        JToken method = __jo.SelectToken("$.aaData[" + i + "].toPaymentType").ToString();
+                        JToken amount = __jo.SelectToken("$.aaData[" + i + "].amount").ToString().Replace(",", "");
+                        JToken pg_bill_no = __jo.SelectToken("$.aaData[" + i + "].referenceNo").ToString();
+                        status = "2";
+
+                        player_info.Add(username + "*|*" + name + "*|*" + date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss") + "*|*" + vip + "*|*" + amount + "*|*" + gateway + "*|*" + status + "*|*" + bill_no + "*|*" + __playerlist_cn + "*|*" + "" + "*|*" + method + "*|*" + pg_bill_no);
+
                         bool isContains = false;
                         char[] split = "*|*".ToCharArray();
                         string[] values = Properties.Settings.Default.______pending_bill_no.Split(split);
@@ -588,6 +691,7 @@ namespace YB_FD_Grab
                             string _contact_no = "";
                             string _process_datetime = "";
                             string _method = "";
+                            string _pg_bill_no = "";
 
                             foreach (string value_inner in values_inner)
                             {
@@ -648,22 +752,27 @@ namespace YB_FD_Grab
                                 {
                                     _method = value_inner;
                                 }
+                                // PG Bill No
+                                else if (count == 12)
+                                {
+                                    _pg_bill_no = value_inner;
+                                }
                             }
 
                             // ----- Insert Data
                             using (StreamWriter file = new StreamWriter(Path.GetTempPath() + @"\fdgrab_yb.txt", true, Encoding.UTF8))
                             {
-                                file.WriteLine(_username + "*|*" + _name + "*|*" + _contact_no + "*|*" + _date_deposit + "*|*" + _vip + "*|*" + _amount + "*|*" + _gateway + "*|*" + _status + "*|*" + _bill_no + "*|*" + _process_datetime + "*|*" + _method);
+                                file.WriteLine(_username + "*|*" + _name + "*|*" + _contact_no + "*|*" + _date_deposit + "*|*" + _vip + "*|*" + _amount + "*|*" + _gateway + "*|*" + _status + "*|*" + _bill_no + "*|*" + _process_datetime + "*|*" + _method + "*|*" + _pg_bill_no);
                                 file.Close();
                             }
                             if (__last_username == _username)
                             {
                                 Thread.Sleep(1000);
-                                ___InsertData(_username, _name, _date_deposit, _vip, _amount, _gateway, _status, _bill_no, _contact_no, _process_datetime, _method);
+                                ___InsertData(_username, _name, _date_deposit, _vip, _amount, _gateway, _status, _bill_no, _contact_no, _process_datetime, _method, _pg_bill_no);
                             }
                             else
                             {
-                                ___InsertData(_username, _name, _date_deposit, _vip, _amount, _gateway, _status, _bill_no, _contact_no, _process_datetime, _method);
+                                ___InsertData(_username, _name, _date_deposit, _vip, _amount, _gateway, _status, _bill_no, _contact_no, _process_datetime, _method, _pg_bill_no);
                             }
                             __last_username = _username;
 
@@ -690,26 +799,19 @@ namespace YB_FD_Grab
 
         private async void timer_pending_TickAsync(object sender, EventArgs e)
         {
-            try
+            if (__isLogin)
             {
-                if (__isLogin)
+                timer_pending.Stop();
+                char[] split = "*|*".ToCharArray();
+                string[] values = Properties.Settings.Default.______pending_bill_no.Split(split);
+                foreach (var value in values)
                 {
-                    timer_pending.Stop();
-                    char[] split = "*|*".ToCharArray();
-                    string[] values = Properties.Settings.Default.______pending_bill_no.Split(split);
-                    foreach (var value in values)
+                    if (value != "")
                     {
-                        if (value != "")
-                        {
-                            await SearchPendingAsync(value);
-                        }
+                        await SearchPendingAsync(value);
                     }
-                    timer_pending.Start();
                 }
-            }
-            catch (Exception err)
-            {
-                MessageBox.Show(err.ToString());
+                timer_pending.Start();
             }
         }
 
@@ -761,15 +863,16 @@ namespace YB_FD_Grab
                 JToken gateway = jo.SelectToken("$.aaData[0].toBankName").ToString();
                 JToken method = jo.SelectToken("$.aaData[0].toPaymentType").ToString();
                 JToken amount = jo.SelectToken("$.aaData[0].amount").ToString().Replace(",", "");
+                JToken pg_bill_no = jo.SelectToken("$.aaData[0].referenceNo").ToString();
 
                 if (__last_username_pending == username.ToString())
                 {
                     Thread.Sleep(1000);
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString());
+                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
                 }
                 else
                 {
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString());
+                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
                 }
                 __last_username_pending = username.ToString();
 
@@ -793,15 +896,16 @@ namespace YB_FD_Grab
                 JToken gateway = jo.SelectToken("$.aaData[0].toBankName").ToString();
                 JToken method = jo.SelectToken("$.aaData[0].toPaymentType").ToString();
                 JToken amount = jo.SelectToken("$.aaData[0].amount").ToString().Replace(",", "");
+                JToken pg_bill_no = jo.SelectToken("$.aaData[0].referenceNo").ToString();
 
                 if (__last_username_pending == username.ToString())
                 {
                     Thread.Sleep(1000);
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString());
+                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
                 }
                 else
                 {
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString());
+                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
                 }
                 __last_username_pending = username.ToString();
 
@@ -809,7 +913,7 @@ namespace YB_FD_Grab
             }
         }
 
-        private void ___InsertData(string username, string name, string date_deposit, string vip, string amount, string gateway, string status, string bill_no, string contact_no, string process_datetime, string method)
+        private void ___InsertData(string username, string name, string date_deposit, string vip, string amount, string gateway, string status, string bill_no, string contact_no, string process_datetime, string method, string pg_bill_no)
         {
             try
             {
@@ -836,6 +940,8 @@ namespace YB_FD_Grab
                         ["success"] = status,
                         ["action_date"] = process_datetime,
                         ["method"] = method,
+                        ["trans_id"] = bill_no,
+                        ["pg_trans_id"] = pg_bill_no,
                         ["token"] = token
                     };
 
@@ -852,7 +958,7 @@ namespace YB_FD_Grab
                     {
                         string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
                         SendITSupport("There's a problem to the server, please re-open the application.");
-                        SendEmail("<html><body>Brand: <font color='" + __brand_color + "'>-----" + __brand_code + "-----</font><br/>IP: 192.168.10.252<br/>Location: Robinsons Summit Office<br/>Date and Time: [" + datetime + "]<br/>Line Number: " + LineNumber() + "<br/>Message: <b>" + err.ToString() + "</b></body></html>");
+                        SendMyBot(err.ToString());
                         __send = 0;
 
                         __isClose = false;
@@ -860,13 +966,13 @@ namespace YB_FD_Grab
                     }
                     else
                     {
-                        ____InsertData2(username, name, date_deposit, vip, amount, gateway, status, bill_no, contact_no, process_datetime, method);
+                        ____InsertData2(username, name, date_deposit, vip, amount, gateway, status, bill_no, contact_no, process_datetime, method, pg_bill_no);
                     }
                 }
             }
         }
 
-        private void ____InsertData2(string username, string name, string date_deposit, string vip, string amount, string gateway, string status, string bill_no, string contact_no, string process_datetime, string method)
+        private void ____InsertData2(string username, string name, string date_deposit, string vip, string amount, string gateway, string status, string bill_no, string contact_no, string process_datetime, string method, string pg_bill_no)
         {
             try
             {
@@ -893,6 +999,8 @@ namespace YB_FD_Grab
                         ["success"] = status,
                         ["action_date"] = process_datetime,
                         ["method"] = method,
+                        ["trans_id"] = bill_no,
+                        ["pg_trans_id"] = pg_bill_no,
                         ["token"] = token
                     };
 
@@ -909,7 +1017,7 @@ namespace YB_FD_Grab
                     {
                         string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
                         SendITSupport("There's a problem to the server, please re-open the application.");
-                        SendEmail("<html><body>Brand: <font color='" + __brand_color + "'>-----" + __brand_code + "-----</font><br/>IP: 192.168.10.252<br/>Location: Robinsons Summit Office<br/>Date and Time: [" + datetime + "]<br/>Line Number: " + LineNumber() + "<br/>Message: <b>" + err.ToString() + "</b></body></html>");
+                        SendMyBot(err.ToString());
                         __send = 0;
 
                         __isClose = false;
@@ -917,7 +1025,7 @@ namespace YB_FD_Grab
                     }
                     else
                     {
-                        ___InsertData(username, name, date_deposit, vip, amount, gateway, status, bill_no, contact_no, process_datetime, method);
+                        ___InsertData(username, name, date_deposit, vip, amount, gateway, status, bill_no, contact_no, process_datetime, method, pg_bill_no);
                     }
                 }
             }
@@ -972,7 +1080,21 @@ namespace YB_FD_Grab
             {
                 if (__isLogin)
                 {
-                    await ___PlayerListContactNumberAsync(username, type);
+                    __send++;
+                    if (__send == 5)
+                    {
+                        string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
+                        SendITSupport("There's a problem to the server, please re-open the application.");
+                        SendMyBot(err.ToString());
+                        __send = 0;
+
+                        __isClose = false;
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        await ___PlayerListContactNumberAsync(username, type);
+                    }
                 }
             }
         }
@@ -1019,41 +1141,26 @@ namespace YB_FD_Grab
             }
         }
 
-        private void SendEmail(string get_message)
+        private void SendMyBot(string message)
         {
             try
             {
-                int port = 587;
-                string host = "smtp.gmail.com";
-                string username = "drake@18tech.com";
-                string password = "@ccess123418tech";
-                string mailFrom = "noreply@mail.com";
-                string mailTo = "drake@18tech.com";
-                string mailTitle = __brand_code + " FD Grab";
-                string mailMessage = get_message;
-
-                using (SmtpClient client = new SmtpClient())
+                string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
+                string urlString = "https://api.telegram.org/bot{0}/sendMessage?chat_id={1}&text={2}";
+                string apiToken = "772918363:AAHn2ufmP3ocLEilQ1V-IHcqYMcSuFJHx5g";
+                string chatId = "@allandrake";
+                string text = "Brand:%20-----" + __brand_code + " " + __app + "-----%0AIP:%20192.168.10.252%0ALocation:%20Robinsons%20Summit%20Office%0ADate%20and%20Time:%20[" + datetime + "]%0AMessage:%20" + message + "";
+                urlString = String.Format(urlString, apiToken, chatId, text);
+                WebRequest request = WebRequest.Create(urlString);
+                Stream rs = request.GetResponse().GetResponseStream();
+                StreamReader reader = new StreamReader(rs);
+                string line = "";
+                StringBuilder sb = new StringBuilder();
+                while (line != null)
                 {
-                    MailAddress from = new MailAddress(mailFrom);
-                    MailMessage message = new MailMessage
-                    {
-                        From = from
-                    };
-                    message.To.Add(mailTo);
-                    message.Subject = mailTitle;
-                    message.Body = mailMessage;
-                    message.IsBodyHtml = true;
-                    client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                    client.UseDefaultCredentials = false;
-                    client.Host = host;
-                    client.Port = port;
-                    client.EnableSsl = true;
-                    client.Credentials = new NetworkCredential
-                    {
-                        UserName = username,
-                        Password = password
-                    };
-                    client.Send(message);
+                    line = reader.ReadLine();
+                    if (line != null)
+                        sb.Append(line);
                 }
             }
             catch (Exception err)
@@ -1061,7 +1168,7 @@ namespace YB_FD_Grab
                 __send++;
                 if (__send == 5)
                 {
-                    SendEmail(get_message);
+                    SendMyBot(message);
                 }
                 else
                 {

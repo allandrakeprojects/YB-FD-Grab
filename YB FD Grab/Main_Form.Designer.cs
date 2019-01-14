@@ -50,7 +50,6 @@
             this.timer_close_message_box = new System.Windows.Forms.Timer(this.components);
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.timer_pending = new System.Windows.Forms.Timer(this.components);
-            this.textBox_bill_no = new System.Windows.Forms.TextBox();
             this.panel_header.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_header)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_minimize)).BeginInit();
@@ -63,7 +62,6 @@
             // panel_header
             // 
             this.panel_header.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(90)))), ((int)(((byte)(101)))));
-            this.panel_header.Controls.Add(this.textBox_bill_no);
             this.panel_header.Controls.Add(this.label1);
             this.panel_header.Controls.Add(this.pictureBox_header);
             this.panel_header.Controls.Add(this.panel1);
@@ -270,15 +268,6 @@
             this.timer_pending.Interval = 20000;
             this.timer_pending.Tick += new System.EventHandler(this.timer_pending_TickAsync);
             // 
-            // textBox_bill_no
-            // 
-            this.textBox_bill_no.Location = new System.Drawing.Point(162, 13);
-            this.textBox_bill_no.Name = "textBox_bill_no";
-            this.textBox_bill_no.Size = new System.Drawing.Size(139, 20);
-            this.textBox_bill_no.TabIndex = 6;
-            this.textBox_bill_no.Visible = false;
-            this.textBox_bill_no.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox_bill_no_KeyDown);
-            // 
             // Main_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -338,6 +327,5 @@
         private System.Windows.Forms.Timer timer;
         private System.Windows.Forms.Timer timer_pending;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox textBox_bill_no;
     }
 }
