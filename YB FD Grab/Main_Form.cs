@@ -808,108 +808,132 @@ namespace YB_FD_Grab
                 {
                     if (value != "")
                     {
-                        await SearchPendingAsync(value);
+                        await ___SearchPendingAsync(value);
                     }
                 }
                 timer_pending.Start();
             }
         }
 
-        private async Task SearchPendingAsync(string bill_no)
+        private async Task ___SearchPendingAsync(string bill_no)
         {
-            string start_time = "2016-01-01 00:00:00";
-            string end_time = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd 00:00:00");
-
-            start_time = start_time.Replace("-", "%2F");
-            start_time = start_time.Replace(" ", "+");
-            start_time = start_time.Replace(":", "%3A");
-
-            end_time = end_time.Replace("-", "%2F");
-            end_time = end_time.Replace(" ", "+");
-            end_time = end_time.Replace(":", "%3A");
-
-            var cookieManager = Cef.GetGlobalCookieManager();
-            var visitor = new CookieCollector();
-            cookieManager.VisitUrlCookies(__url, true, visitor);
-            var cookies = await visitor.Task;
-            var cookie = CookieCollector.GetCookieHeader(cookies);
-            WebClient wc = new WebClient();
-            wc.Headers.Add("Cookie", cookie);
-            wc.Encoding = Encoding.UTF8;
-            wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
-
-            byte[] result = await wc.DownloadDataTaskAsync("http://103.4.104.8/manager/payment/searchDeposit?transactionId=" + bill_no + "&referenceNo=&userId=&status=9999&type=2&toBankIdOrBranch=-1&createDateStart=" + start_time + "&createDateEnd=" + end_time + "&vipLevel=-1&approvedDateStart=&approvedDateEnd=&pageNumber=1&pageSize=10&sortCondition=4&sortName=createTime&sortOrder=1&searchText=");
-            string responsebody = Encoding.UTF8.GetString(result);
-            var deserializeObject = JsonConvert.DeserializeObject(responsebody);
-            JToken jo = JObject.Parse(deserializeObject.ToString());
-            JToken status = jo.SelectToken("$.aaData[0].status");
-            
-            string path = Path.GetTempPath() + @"\fdgrab_yb_pending.txt";
-            if (status.ToString() == "2")
+            try
             {
-                Properties.Settings.Default.______pending_bill_no = Properties.Settings.Default.______pending_bill_no.Replace(bill_no + "*|*", "");
-                label1.Text = Properties.Settings.Default.______pending_bill_no;
-                Properties.Settings.Default.Save();
+                string start_time = "2016-01-01 00:00:00";
+                string end_time = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd 00:00:00");
 
-                status = "1";
-                JToken username = jo.SelectToken("$.aaData[0].userId").ToString();
-                await ___PlayerListContactNumberAsync(username.ToString(), "pending");
-                JToken name = jo.SelectToken("$.aaData[0].userName").ToString();
-                JToken date_deposit = jo.SelectToken("$.aaData[0].createTime").ToString();
-                DateTime date_deposit_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(date_deposit.ToString()) / 1000d)).ToLocalTime();
-                JToken process_datetime = jo.SelectToken("$.aaData[0].approvedTime").ToString();
-                DateTime process_datetime_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(process_datetime.ToString()) / 1000d)).ToLocalTime();
-                JToken vip = jo.SelectToken("$.aaData[0].vipLevel").ToString();
-                JToken gateway = jo.SelectToken("$.aaData[0].toBankName").ToString();
-                JToken method = jo.SelectToken("$.aaData[0].toPaymentType").ToString();
-                JToken amount = jo.SelectToken("$.aaData[0].amount").ToString().Replace(",", "");
-                JToken pg_bill_no = jo.SelectToken("$.aaData[0].referenceNo").ToString();
+                start_time = start_time.Replace("-", "%2F");
+                start_time = start_time.Replace(" ", "+");
+                start_time = start_time.Replace(":", "%3A");
 
-                if (__last_username_pending == username.ToString())
+                end_time = end_time.Replace("-", "%2F");
+                end_time = end_time.Replace(" ", "+");
+                end_time = end_time.Replace(":", "%3A");
+
+                var cookieManager = Cef.GetGlobalCookieManager();
+                var visitor = new CookieCollector();
+                cookieManager.VisitUrlCookies(__url, true, visitor);
+                var cookies = await visitor.Task;
+                var cookie = CookieCollector.GetCookieHeader(cookies);
+                WebClient wc = new WebClient();
+                wc.Headers.Add("Cookie", cookie);
+                wc.Encoding = Encoding.UTF8;
+                wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
+
+                byte[] result = await wc.DownloadDataTaskAsync("http://103.4.104.8/manager/payment/searchDeposit?transactionId=" + bill_no + "&referenceNo=&userId=&status=9999&type=2&toBankIdOrBranch=-1&createDateStart=" + start_time + "&createDateEnd=" + end_time + "&vipLevel=-1&approvedDateStart=&approvedDateEnd=&pageNumber=1&pageSize=10&sortCondition=4&sortName=createTime&sortOrder=1&searchText=");
+                string responsebody = Encoding.UTF8.GetString(result);
+                var deserializeObject = JsonConvert.DeserializeObject(responsebody);
+                JToken jo = JObject.Parse(deserializeObject.ToString());
+                JToken status = jo.SelectToken("$.aaData[0].status");
+
+                string path = Path.GetTempPath() + @"\fdgrab_yb_pending.txt";
+                if (status.ToString() == "2")
                 {
-                    Thread.Sleep(100);
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
-                }
-                else
-                {
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
-                }
-                __last_username_pending = username.ToString();
+                    Properties.Settings.Default.______pending_bill_no = Properties.Settings.Default.______pending_bill_no.Replace(bill_no + "*|*", "");
+                    label1.Text = Properties.Settings.Default.______pending_bill_no;
+                    Properties.Settings.Default.Save();
 
-                __send = 0;
+                    status = "1";
+                    JToken username = jo.SelectToken("$.aaData[0].userId").ToString();
+                    await ___PlayerListContactNumberAsync(username.ToString(), "pending");
+                    JToken name = jo.SelectToken("$.aaData[0].userName").ToString();
+                    JToken date_deposit = jo.SelectToken("$.aaData[0].createTime").ToString();
+                    DateTime date_deposit_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(date_deposit.ToString()) / 1000d)).ToLocalTime();
+                    JToken process_datetime = jo.SelectToken("$.aaData[0].approvedTime").ToString();
+                    DateTime process_datetime_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(process_datetime.ToString()) / 1000d)).ToLocalTime();
+                    JToken vip = jo.SelectToken("$.aaData[0].vipLevel").ToString();
+                    JToken gateway = jo.SelectToken("$.aaData[0].toBankName").ToString();
+                    JToken method = jo.SelectToken("$.aaData[0].toPaymentType").ToString();
+                    JToken amount = jo.SelectToken("$.aaData[0].amount").ToString().Replace(",", "");
+                    JToken pg_bill_no = jo.SelectToken("$.aaData[0].referenceNo").ToString();
+
+                    if (__last_username_pending == username.ToString())
+                    {
+                        Thread.Sleep(100);
+                        ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
+                    }
+                    else
+                    {
+                        ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
+                    }
+                    __last_username_pending = username.ToString();
+
+                    __send = 0;
+                }
+                else if (status.ToString() == "-2")
+                {
+                    Properties.Settings.Default.______pending_bill_no = Properties.Settings.Default.______pending_bill_no.Replace(bill_no + "*|*", "");
+                    label1.Text = Properties.Settings.Default.______pending_bill_no;
+                    Properties.Settings.Default.Save();
+
+                    status = "0";
+                    JToken username = jo.SelectToken("$.aaData[0].userId").ToString();
+                    await ___PlayerListContactNumberAsync(username.ToString(), "pending");
+                    JToken name = jo.SelectToken("$.aaData[0].userName").ToString();
+                    JToken date_deposit = jo.SelectToken("$.aaData[0].createTime").ToString();
+                    DateTime date_deposit_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(date_deposit.ToString()) / 1000d)).ToLocalTime();
+                    JToken process_datetime = jo.SelectToken("$.aaData[0].approvedTime").ToString();
+                    DateTime process_datetime_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(process_datetime.ToString()) / 1000d)).ToLocalTime();
+                    JToken vip = jo.SelectToken("$.aaData[0].vipLevel").ToString();
+                    JToken gateway = jo.SelectToken("$.aaData[0].toBankName").ToString();
+                    JToken method = jo.SelectToken("$.aaData[0].toPaymentType").ToString();
+                    JToken amount = jo.SelectToken("$.aaData[0].amount").ToString().Replace(",", "");
+                    JToken pg_bill_no = jo.SelectToken("$.aaData[0].referenceNo").ToString();
+
+                    if (__last_username_pending == username.ToString())
+                    {
+                        Thread.Sleep(100);
+                        ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
+                    }
+                    else
+                    {
+                        ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
+                    }
+                    __last_username_pending = username.ToString();
+
+                    __send = 0;
+                }
             }
-            else if (status.ToString() == "-2")
+            catch (Exception err)
             {
-                Properties.Settings.Default.______pending_bill_no = Properties.Settings.Default.______pending_bill_no.Replace(bill_no + "*|*", "");
-                label1.Text = Properties.Settings.Default.______pending_bill_no;
-                Properties.Settings.Default.Save();
-
-                status = "0";
-                JToken username = jo.SelectToken("$.aaData[0].userId").ToString();
-                await ___PlayerListContactNumberAsync(username.ToString(), "pending");
-                JToken name = jo.SelectToken("$.aaData[0].userName").ToString();
-                JToken date_deposit = jo.SelectToken("$.aaData[0].createTime").ToString();
-                DateTime date_deposit_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(date_deposit.ToString()) / 1000d)).ToLocalTime();
-                JToken process_datetime = jo.SelectToken("$.aaData[0].approvedTime").ToString();
-                DateTime process_datetime_replace = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Math.Round(Convert.ToDouble(process_datetime.ToString()) / 1000d)).ToLocalTime();
-                JToken vip = jo.SelectToken("$.aaData[0].vipLevel").ToString();
-                JToken gateway = jo.SelectToken("$.aaData[0].toBankName").ToString();
-                JToken method = jo.SelectToken("$.aaData[0].toPaymentType").ToString();
-                JToken amount = jo.SelectToken("$.aaData[0].amount").ToString().Replace(",", "");
-                JToken pg_bill_no = jo.SelectToken("$.aaData[0].referenceNo").ToString();
-
-                if (__last_username_pending == username.ToString())
+                if (__isLogin)
                 {
-                    Thread.Sleep(100);
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
-                }
-                else
-                {
-                    ___InsertData(username.ToString(), name.ToString(), date_deposit_replace.ToString("yyyy-MM-dd HH:mm:ss"), vip.ToString(), amount.ToString(), gateway.ToString(), status.ToString(), bill_no, __playerlist_cn_pending, process_datetime_replace.ToString("yyyy-MM-dd HH:mm:ss"), method.ToString(), pg_bill_no.ToString());
-                }
-                __last_username_pending = username.ToString();
+                    __send++;
+                    if (__send == 5)
+                    {
+                        string datetime = DateTime.Now.ToString("dd MMM HH:mm:ss");
+                        SendITSupport("There's a problem to the server, please re-open the application.");
+                        SendMyBot(err.ToString());
+                        __send = 0;
 
-                __send = 0;
+                        __isClose = false;
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        await ___SearchPendingAsync(bill_no);
+                    }
+                }
             }
         }
 
