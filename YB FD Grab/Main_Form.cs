@@ -228,7 +228,7 @@ namespace YB_FD_Grab
             if (dr == DialogResult.Yes)
             {
                 __isClose = true;
-                Environment.Exit(0);
+                Application.Exit();
             }
         }
 
@@ -250,11 +250,11 @@ namespace YB_FD_Grab
                 }
                 else
                 {
-                    Environment.Exit(0);
+                    Application.Exit();
                 }
             }
 
-            Environment.Exit(0);
+            Application.Exit();
         }
         
         // Form Load
@@ -446,7 +446,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -498,7 +498,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -562,7 +562,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -929,7 +929,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -988,7 +988,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -1047,7 +1047,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -1115,7 +1115,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -1139,7 +1139,7 @@ namespace YB_FD_Grab
                 string urlString = "https://api.telegram.org/bot{0}/sendMessage?chat_id={1}&text={2}";
                 string apiToken = "772918363:AAHn2ufmP3ocLEilQ1V-IHcqYMcSuFJHx5g";
                 string chatId = "@allandrake";
-                string text = "Brand:%20-----" + __brand_code + " " + __app + "-----%0AIP:%20192.168.10.252%0ALocation:%20Robinsons%20Summit%20Office%0ADate%20and%20Time:%20[" + datetime + "]%0AMessage:%20" + message + "";
+                string text = "-----" + __brand_code + " " + __app + "-----%0A%0AIP:%20" + Properties.Settings.Default.______server_ip + "%0ALocation:%20" + Properties.Settings.Default.______server_location + "%0ADate%20and%20Time:%20[" + datetime + "]%0AMessage:%20" + message + "";
                 urlString = String.Format(urlString, apiToken, chatId, text);
                 WebRequest request = WebRequest.Create(urlString);
                 Stream rs = request.GetResponse().GetResponseStream();
@@ -1161,7 +1161,7 @@ namespace YB_FD_Grab
                     MessageBox.Show(err.ToString());
 
                     __isClose = false;
-                    Environment.Exit(0);
+                    Application.Exit();
                 }
                 else
                 {
@@ -1178,7 +1178,7 @@ namespace YB_FD_Grab
                 string urlString = "https://api.telegram.org/bot{0}/sendMessage?chat_id={1}&text={2}";
                 string apiToken = "612187347:AAE9doWWcStpWrDrfpOod89qGSxCJ5JwQO4";
                 string chatId = "@it_support_ssi";
-                string text = "-----" + __brand_code + " " + __app + "-----%0A%0AIP:%20192.168.10.252%0ALocation:%20Robinsons%20Summit%0ADate%20and%20Time:%20[" + datetime + "]%0AMessage:%20" + message + "";
+                string text = "-----" + __brand_code + " " + __app + "-----%0A%0AIP:%20" + Properties.Settings.Default.______server_ip + "%0ALocation:%20" + Properties.Settings.Default.______server_location + "%0ADate%20and%20Time:%20[" + datetime + "]%0AMessage:%20" + message + "";
                 urlString = String.Format(urlString, apiToken, chatId, text);
                 WebRequest request = WebRequest.Create(urlString);
                 Stream rs = request.GetResponse().GetResponseStream();
@@ -1202,7 +1202,7 @@ namespace YB_FD_Grab
                     MessageBox.Show(err.ToString());
 
                     __isClose = false;
-                    Environment.Exit(0);
+                    Application.Exit();
                 }
                 else
                 {
@@ -1297,7 +1297,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
@@ -1346,7 +1346,7 @@ namespace YB_FD_Grab
                         __send = 0;
 
                         __isClose = false;
-                        Environment.Exit(0);
+                        Application.Exit();
                     }
                     else
                     {
