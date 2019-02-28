@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -262,8 +263,28 @@ namespace YB_FD_Grab
         private void Main_Form_Load(object sender, EventArgs e)
         {
             InitializeChromium();
-            
-            label1.Text = Properties.Settings.Default.______pending_bill_no;
+
+            try
+            {
+                label1.Text = Properties.Settings.Default.______pending_bill_no;
+            }
+            catch (Exception err)
+            {
+                string path = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
+                DirectoryInfo parent_dir_01 = Directory.GetParent(path.EndsWith("\\") ? path : string.Concat(path, "\\"));
+                DirectoryInfo parent_dir_02 = Directory.GetParent(path.EndsWith("\\") ? parent_dir_01.Parent.FullName : string.Concat(parent_dir_01.Parent.FullName, "\\"));
+                string parent_dir = parent_dir_02.Parent.FullName;
+                if (Directory.Exists(parent_dir))
+                {
+                    Directory.Delete(parent_dir, true);
+                }
+
+                SendITSupport("There's a problem to the server, please re-open the application.");
+                SendMyBot(err.ToString() + " ----- hexademical");
+
+                __isClose = false;
+                Environment.Exit(0);
+            }
         }
 
         // CefSharp Initialize
@@ -410,8 +431,8 @@ namespace YB_FD_Grab
                 __send++;
                 if (__send == 5)
                 {
-                    SendMyBot(err.ToString());
                     SendITSupport("There's a problem to the server, please re-open the application.");
+                    SendMyBot(err.ToString() + " ----- hexadecimal");
 
                     __isClose = false;
                     Environment.Exit(0);
@@ -1167,19 +1188,39 @@ namespace YB_FD_Grab
             }
             catch (Exception err)
             {
-                __send++;
-                if (__send == 5)
+                if (err.ToString().ToLower().Contains("hexadecimal"))
                 {
+                    string path = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
+                    DirectoryInfo parent_dir_01 = Directory.GetParent(path.EndsWith("\\") ? path : string.Concat(path, "\\"));
+                    DirectoryInfo parent_dir_02 = Directory.GetParent(path.EndsWith("\\") ? parent_dir_01.Parent.FullName : string.Concat(parent_dir_01.Parent.FullName, "\\"));
+                    string parent_dir = parent_dir_02.Parent.FullName;
+                    if (Directory.Exists(parent_dir))
+                    {
+                        Directory.Delete(parent_dir, true);
+                    }
+
                     SendITSupport("There's a problem to the server, please re-open the application.");
-                    SendMyBot(err.ToString());
+                    SendMyBot(err.ToString() + " ----- hexademical");
 
                     __isClose = false;
                     Environment.Exit(0);
                 }
                 else
                 {
-                    ___WaitNSeconds(10);
-                    SendMyBot(message);
+                    __send++;
+                    if (__send == 5)
+                    {
+                        SendITSupport("There's a problem to the server, please re-open the application.");
+                        SendMyBot(err.ToString());
+
+                        __isClose = false;
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        ___WaitNSeconds(10);
+                        SendMyBot(message);
+                    }
                 }
             }
         }
@@ -1212,19 +1253,39 @@ namespace YB_FD_Grab
                 }
                 catch (Exception err)
                 {
-                    __send++;
-                    if (__send == 5)
+                    if (err.ToString().ToLower().Contains("hexadecimal"))
                     {
+                        string path = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
+                        DirectoryInfo parent_dir_01 = Directory.GetParent(path.EndsWith("\\") ? path : string.Concat(path, "\\"));
+                        DirectoryInfo parent_dir_02 = Directory.GetParent(path.EndsWith("\\") ? parent_dir_01.Parent.FullName : string.Concat(parent_dir_01.Parent.FullName, "\\"));
+                        string parent_dir = parent_dir_02.Parent.FullName;
+                        if (Directory.Exists(parent_dir))
+                        {
+                            Directory.Delete(parent_dir, true);
+                        }
+
                         SendITSupport("There's a problem to the server, please re-open the application.");
-                        SendMyBot(err.ToString());
+                        SendMyBot(err.ToString() + " ----- hexademical");
 
                         __isClose = false;
                         Environment.Exit(0);
                     }
                     else
                     {
-                        ___WaitNSeconds(10);
-                        SendITSupport(message);
+                        __send++;
+                        if (__send == 5)
+                        {
+                            SendITSupport("There's a problem to the server, please re-open the application.");
+                            SendMyBot(err.ToString());
+
+                            __isClose = false;
+                            Environment.Exit(0);
+                        }
+                        else
+                        {
+                            ___WaitNSeconds(10);
+                            SendITSupport(message);
+                        }
                     }
                 }
             }
