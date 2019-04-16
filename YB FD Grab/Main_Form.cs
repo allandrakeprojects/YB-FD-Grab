@@ -26,7 +26,6 @@ namespace YB_FD_Grab
         private bool __isLogin = false;
         private bool __isClose;
         private bool m_aeroEnabled;
-        private bool __is_send = true;
         private int __send = 0;
         private int __total_player = 0;
         private string __brand_code = "YB";
@@ -316,6 +315,12 @@ namespace YB_FD_Grab
                         SendMyBot("The application have been logout, please re-login again.");
                         __send = 0;
                         timer_pending.Stop();
+
+                        if (!Properties.Settings.Default.______is_send_telegram)
+                        {
+                            __isClose = false;
+                            Environment.Exit(0);
+                        }
                     }));
                 }
 
@@ -334,6 +339,7 @@ namespace YB_FD_Grab
                                 {
                                     args.Frame.ExecuteJavaScriptAsync("document.getElementById('username').value = 'ybrainfd';");
                                     args.Frame.ExecuteJavaScriptAsync("document.getElementById('password').value = 'rain12345';");
+                                    args.Frame.ExecuteJavaScriptAsync("document.querySelector('#login').click();");
                                     __isLogin = false;
                                     panel_cefsharp.Visible = true;
                                     label_player_last_bill_no.Text = "-";
@@ -367,7 +373,7 @@ namespace YB_FD_Grab
                         label_brand.Visible = true;
                         pictureBox_loader.Visible = true;
                         label_player_last_bill_no.Visible = true;
-                        ___PlayerLastBillNo();
+                        await ___PlayerLastBillNoAsync();
                         await ___GetPlayerListsRequest();
                     }
                 }));
@@ -404,14 +410,16 @@ namespace YB_FD_Grab
         {
             ___CloseMessageBox();
         }
-        
-        private void ___PlayerLastBillNo()
+
+        private async Task ___PlayerLastBillNoAsync()
         {
+            Properties.Settings.Default.______last_bill_no = "";
+
             try
             {
                 if (Properties.Settings.Default.______last_bill_no == "")
                 {
-                    ___GetLastBillNo();
+                    await ___GetLastBillNoAsync();
                 }
 
                 label_player_last_bill_no.Text = "Last Bill No.: " + Properties.Settings.Default.______last_bill_no;
@@ -430,12 +438,12 @@ namespace YB_FD_Grab
                 else
                 {
                     ___WaitNSeconds(10);
-                    ___PlayerLastBillNo();
+                    await ___PlayerLastBillNoAsync();
                 }
             }
         }
 
-        private void ___GetLastBillNo()
+        private async Task ___GetLastBillNoAsync()
         {
             try
             {
@@ -454,7 +462,7 @@ namespace YB_FD_Grab
                         ["token"] = token
                     };
 
-                    var result = wb.UploadValues("http://zeus.ssitex.com:8080/API/lastFDRecord", "POST", data);
+                    byte[] result = await wb.UploadValuesTaskAsync("http://192.168.10.252:8080/API/lastFDRecord", "POST", data);
                     string responsebody = Encoding.UTF8.GetString(result);
                     var deserializeObject = JsonConvert.DeserializeObject(responsebody);
                     JObject jo = JObject.Parse(deserializeObject.ToString());
@@ -480,13 +488,13 @@ namespace YB_FD_Grab
                     else
                     {
                         ___WaitNSeconds(10);
-                        ___GetLastBillNo2();
+                        await ___GetLastBillNo2Async();
                     }
                 }
             }
         }
 
-        private void ___GetLastBillNo2()
+        private async Task ___GetLastBillNo2Async()
         {
             try
             {
@@ -505,7 +513,7 @@ namespace YB_FD_Grab
                         ["token"] = token
                     };
 
-                    var result = wb.UploadValues("http://zeus2.ssitex.com:8080/API/lastFDRecord", "POST", data);
+                    var result = await wb.UploadValuesTaskAsync("http://zeus.ssitex.com:8080/API/lastFDRecord", "POST", data);
                     string responsebody = Encoding.UTF8.GetString(result);
                     var deserializeObject = JsonConvert.DeserializeObject(responsebody);
                     JObject jo = JObject.Parse(deserializeObject.ToString());
@@ -531,7 +539,7 @@ namespace YB_FD_Grab
                     else
                     {
                         ___WaitNSeconds(10);
-                        ___GetLastBillNo();
+                        await ___GetLastBillNoAsync();
                     }
                 }
             }
@@ -1223,7 +1231,7 @@ namespace YB_FD_Grab
 
         private void SendITSupport(string message)
         {
-            if (__is_send)
+            if (Properties.Settings.Default.______is_send_telegram)
             {
                 try
                 {
@@ -1440,14 +1448,18 @@ namespace YB_FD_Grab
 
         private void panel1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (__is_send)
+            label1.Visible = false;
+
+            if (Properties.Settings.Default.______is_send_telegram)
             {
-                __is_send = false;
+                Properties.Settings.Default.______is_send_telegram = false;
+                Properties.Settings.Default.Save();
                 MessageBox.Show("Telegram Notification is Disabled.", __brand_code + " " + __app, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
-                __is_send = true;
+                Properties.Settings.Default.______is_send_telegram = true;
+                Properties.Settings.Default.Save();
                 MessageBox.Show("Telegram Notification is Enabled.", __brand_code + " " + __app, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
